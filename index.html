@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Christmas - 3D Tilt Control</title>
+    <title>Magic Christmas - 3D Cloud Gallery</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -54,12 +54,12 @@
 <body>
     <div id="ui-layer">
         <div class="guide">
-            🖐 <b>Mở tay:</b> Xoay 3D (Trái/Phải/Lên/Xuống) &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm tay:</b> Cây thông
+            🖐 <b>Mở tay:</b> Xoay 3D (Mây ảnh) &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm tay:</b> Cây thông
         </div>
         <button id="btnStart" onclick="startSystem()">START MAGIC</button>
     </div>
 
-    <div id="copyright">© by vandiep (3D Tilt)</div>
+    <div id="copyright">© by vandiep (Cloud Edition)</div>
 
     <div id="canvas-container"></div>
     <video class="input_video" style="display:none"></video>
@@ -75,7 +75,8 @@
 
         const loader = new THREE.TextureLoader();
 
-        // --- DANH SÁCH ẢNH (THÊM BAO NHIÊU TÙY THÍCH) ---
+        // --- DANH SÁCH ẢNH (THÊM TÙY Ý) ---
+        // Để demo đẹp, mình thêm nhiều ảnh placeholder hơn
         const photoFiles = [
             './image1.jpeg', 
             './image2.jpeg', 
@@ -86,24 +87,27 @@
             'https://picsum.photos/id/1012/500/500',
             'https://picsum.photos/id/1013/500/500',
             'https://picsum.photos/id/1014/500/500',
-            'https://picsum.photos/id/1015/500/500'
+            'https://picsum.photos/id/1015/500/500',
+            'https://picsum.photos/id/1016/500/500',
+            'https://picsum.photos/id/1018/500/500',
+            'https://picsum.photos/id/1019/500/500',
+            'https://picsum.photos/id/1020/500/500',
+            'https://picsum.photos/id/1021/500/500'
         ];
 
         const photoTextures = [];
         photoFiles.forEach((f, i) => {
-            photoTextures[i] = loader.load(f, undefined, undefined, (err) => console.warn("Load err"));
+            photoTextures[i] = loader.load(f, undefined, undefined, (err) => {});
         });
 
-        // Tự động tính bán kính
-        const baseRadius = 25;
-        const dynamicRadius = Math.max(baseRadius, (photoFiles.length * 5) / (2 * Math.PI) * 1.5);
+        // Bán kính vùng bay của ảnh
+        const CLOUD_RADIUS = 45; 
 
         const CONFIG = {
             goldCount: 2000,
             redCount: 300,
             giftCount: 150,
-            explodeRadius: dynamicRadius + 20,  
-            photoOrbitRadius: dynamicRadius,   
+            explodeRadius: CLOUD_RADIUS + 10,  
             treeHeight: 70,
             treeBaseRadius: 35
         };
@@ -147,13 +151,8 @@
         let state = 'TREE'; 
         let selectedIndex = 0;
         
-        // Hand Coordinates (Normalized 0.0 -> 1.0)
-        let handX = 0.5; 
-        let handY = 0.5;
-
-        // Rotation Targets (For Smooth Lerp)
-        let curRotX = 0; // Pitch (Up/Down)
-        let curRotY = 0; // Yaw (Left/Right)
+        let handX = 0.5; let handY = 0.5;
+        let curRotX = 0; let curRotY = 0;
 
         // ==========================================
         // 3. THREE.JS SYSTEM
@@ -182,11 +181,10 @@
 
         function createParticleSystem(type, count, size) {
             const pPositions = [];
-            const pExplodeTargets = []; // Store raw sphere coordinates
+            const pExplodeTargets = []; 
             const pTreeTargets = [];
             const pHeartTargets = [];
-            const sizes = []; 
-            const phases = []; 
+            const sizes = []; const phases = []; 
             
             for(let i=0; i<count; i++) {
                 // TREE
@@ -198,15 +196,14 @@
                 const theta = Math.random() * Math.PI * 2;
                 pTreeTargets.push(r * Math.cos(theta), y, r * Math.sin(theta));
 
-                // EXPLODE (Sphere)
+                // EXPLODE (Sphere Random)
                 const u = Math.random();
                 const v = Math.random();
                 const phi = Math.acos(2 * v - 1);
                 const lam = 2 * Math.PI * u;
-                let radMult = (type === 'gift') ? 1.2 : 1.0;
-                const rad = CONFIG.explodeRadius * Math.cbrt(Math.random()) * radMult;
-                // Save base coordinates without rotation
-                pExplodeTargets.push(rad * Math.sin(phi) * Math.cos(lam), rad * Math.sin(phi) * Math.sin(lam), rad * Math.cos(phi));
+                // Tạo độ dày cho khối cầu
+                const rVar = CONFIG.explodeRadius * (0.8 + 0.4 * Math.random()); 
+                pExplodeTargets.push(rVar * Math.sin(phi) * Math.cos(lam), rVar * Math.sin(phi) * Math.sin(lam), rVar * Math.cos(phi));
 
                 // HEART
                 const tHeart = Math.random() * Math.PI * 2;
@@ -259,6 +256,9 @@
             const borderGeo = new THREE.PlaneGeometry(9, 9); 
             const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); 
 
+            // Fibonacci Sphere Algorithm để phân bố ảnh đều nhưng vẫn ngẫu nhiên trên khối cầu
+            const phi = Math.PI * (3. - Math.sqrt(5.)); // Golden angle
+
             for(let i=0; i < photoFiles.length; i++) {
                 const mat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
                 if (photoTextures[i]) { mat.map = photoTextures[i]; mat.color.setHex(0xFFFFFF); }
@@ -268,6 +268,29 @@
                 border.position.z = -0.1; 
                 mesh.add(border);
                 mesh.visible = false; mesh.scale.set(0,0,0);
+
+                // --- TÍNH TOÁN VỊ TRÍ NGẪU NHIÊN CHO ẢNH ---
+                // Dùng thuật toán cầu hoặc random thuần túy
+                // Ở đây mình dùng random spherical coordinates để nó xuất hiện "khắp mọi nơi"
+                const u = Math.random();
+                const v = Math.random();
+                const theta = 2 * Math.PI * u;
+                const phi_angle = Math.acos(2 * v - 1);
+                
+                // Random độ sâu (radius) từ CLOUD_RADIUS - 10 đến CLOUD_RADIUS + 10
+                // Để tạo chiều sâu lớp lớp
+                const r = CLOUD_RADIUS + (Math.random() - 0.5) * 20; 
+
+                const x = r * Math.sin(phi_angle) * Math.cos(theta);
+                const y = r * Math.sin(phi_angle) * Math.sin(theta);
+                const z = r * Math.cos(phi_angle);
+
+                // Lưu vị trí gốc vào userData để dùng khi xoay
+                mesh.userData.origin = new THREE.Vector3(x, y, z);
+                
+                // Random độ nghiêng ban đầu của từng ảnh cho tự nhiên
+                mesh.userData.randomRot = new THREE.Euler(Math.random(), Math.random(), 0);
+
                 scene.add(mesh);
                 photoMeshes.push(mesh);
             }
@@ -322,7 +345,6 @@
             const targetKey = (targetState === 'TREE') ? 'tree' : (targetState === 'HEART' ? 'heart' : 'explode');
             const targets = group.geometry.userData[(targetState === 'PHOTO') ? 'explode' : targetKey];
 
-            // Lerp Positions
             for(let i=0; i<positions.length; i++) {
                 positions[i] += (targets[i] - positions[i]) * speed;
             }
@@ -332,7 +354,7 @@
             
             if (targetState === 'TREE') {
                 group.rotation.y += 0.003;
-                group.rotation.x = 0; // Reset tilt
+                group.rotation.x = 0;
                 for(let i=0; i<count; i++) {
                     sizes[i] = baseSize;
                     let b = 1.0;
@@ -349,10 +371,7 @@
                     sizes[i] = (i % 3 === 0) ? baseSize : 0;
                 }
             } else {
-                // EXPLODE & PHOTO: Apply Hand Rotation
                 group.scale.set(1,1,1);
-                
-                // Xoay toàn bộ group hạt theo tay
                 group.rotation.y = rY;
                 group.rotation.x = rX;
 
@@ -371,26 +390,12 @@
             const time = Date.now() * 0.001;
             const speed = 0.08;
 
-            // ===========================================
-            // LOGIC XOAY 3D THEO VỊ TRÍ TAY (Position Mapping)
-            // ===========================================
-            // handX: 0.0 (Left) -> 1.0 (Right)
-            // handY: 0.0 (Top) -> 1.0 (Bottom)
-            
-            let targetRotY = 0;
-            let targetRotX = 0;
-
+            // --- ROTATION LOGIC ---
+            let targetRotY = 0; let targetRotX = 0;
             if (state === 'EXPLODE' || state === 'PHOTO') {
-                // Map handX to Y-Rotation (Left/Right)
-                // Nhân 3 lần PI để góc xoay rộng (nhìn ra sau lưng được)
                 targetRotY = (handX - 0.5) * Math.PI * 3; 
-
-                // Map handY to X-Rotation (Up/Down - Tilt)
-                // Nhân 0.8 để nghiêng vừa phải, không bị lộn ngược
                 targetRotX = (handY - 0.5) * Math.PI * 0.8; 
             }
-
-            // Lerp smooth movement
             curRotY += (targetRotY - curRotY) * 0.1;
             curRotX += (targetRotX - curRotX) * 0.1;
 
@@ -398,7 +403,7 @@
             updateParticleGroup(groupRed, 'red', state, speed, curRotX, curRotY, time);
             updateParticleGroup(groupGift, 'gift', state, speed, curRotX, curRotY, time);
 
-            // Textures Update
+            // Update Texture Map
             photoMeshes.forEach((mesh, i) => {
                 if(photoTextures[i] && mesh.material.map !== photoTextures[i]) {
                     mesh.material.map = photoTextures[i]; mesh.material.color.setHex(0xFFFFFF); mesh.material.needsUpdate = true;
@@ -419,31 +424,19 @@
             } else if (state === 'EXPLODE') {
                 titleMesh.visible = false; starMesh.visible = false; loveMesh.visible = false;
                 
-                const totalPhotos = photoMeshes.length;
-                const angleStep = (Math.PI * 2) / totalPhotos;
-                
-                // Euler rotation object for 3D Transform
-                // Y xoay ngang, X xoay dọc (nghiêng)
+                // Euler rotation object
                 const euler = new THREE.Euler(curRotX, curRotY, 0, 'YXZ');
-
+                
                 let bestIdx = 0; let maxZ = -9999;
 
                 photoMeshes.forEach((mesh, i) => {
                     mesh.visible = true;
                     
-                    // 1. Tính vị trí gốc (vòng tròn phẳng)
-                    const baseAngle = i * angleStep;
-                    const radius = CONFIG.photoOrbitRadius;
+                    // --- ÁP DỤNG XOAY CHO VỊ TRÍ GỐC (RANDOM) ---
+                    // Lấy vị trí gốc (vốn dĩ đã ở khắp nơi)
+                    const vec = new THREE.Vector3().copy(mesh.userData.origin);
                     
-                    // Tạo vector vị trí gốc
-                    let vec = new THREE.Vector3(
-                        Math.sin(baseAngle) * radius,
-                        Math.sin(time + i) * 2, // Nhấp nhô nhẹ
-                        Math.cos(baseAngle) * radius
-                    );
-
-                    // 2. ÁP DỤNG XOAY 3D (QUAN TRỌNG)
-                    // Xoay vector vị trí này theo góc của tay
+                    // Xoay vị trí đó theo tay người dùng
                     vec.applyEuler(euler);
 
                     mesh.position.lerp(vec, 0.1);
@@ -451,14 +444,16 @@
                     
                     if (vec.z > maxZ) { maxZ = vec.z; bestIdx = i; }
                     
-                    // Scale effect
-                    if (vec.z > (CONFIG.photoOrbitRadius - 20)) { 
-                        const distFactor = (vec.z / CONFIG.photoOrbitRadius); 
-                        const ds = 1.0 + Math.pow(distFactor, 3) * 1.0; 
-                        mesh.scale.lerp(new THREE.Vector3(ds, ds, ds), 0.1);
-                    } else {
-                        mesh.scale.lerp(new THREE.Vector3(0.6, 0.6, 0.6), 0.1);
+                    // --- SCALE LOGIC (YÊU CẦU 2) ---
+                    // Kích thước bình thường (trôi nổi) là 0.15 (1/4 so với 0.6 cũ)
+                    let targetScale = 0.15; 
+
+                    // Nếu ảnh ở rất gần mặt (tình cờ bay qua), phóng to nhẹ để tạo chiều sâu
+                    if (vec.z > (CLOUD_RADIUS - 10)) { 
+                         targetScale = 0.3; // To hơn một chút nếu ở gần
                     }
+
+                    mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
                 });
                 selectedIndex = bestIdx;
 
@@ -466,8 +461,9 @@
                 loveMesh.visible = false;
                 photoMeshes.forEach((mesh, i) => {
                     if (i === selectedIndex) {
+                        // Ảnh được chọn -> Bay về giữa -> Phóng to (Giữ nguyên size to)
                         mesh.position.lerp(new THREE.Vector3(0, 0, 60), 0.1);
-                        mesh.scale.lerp(new THREE.Vector3(5, 5, 5), 0.1);
+                        mesh.scale.lerp(new THREE.Vector3(5, 5, 5), 0.1); // Scale 5.0 (To)
                         mesh.rotation.set(0,0,0); 
                     } else {
                         mesh.scale.lerp(new THREE.Vector3(0,0,0), 0.1);
@@ -501,8 +497,7 @@
 
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
-                    handX = lm[9].x; // Xoay trái phải
-                    handY = lm[9].y; // Xoay lên xuống (Tilt)
+                    handX = lm[9].x; handY = lm[9].y; 
                     
                     const tips = [8,12,16,20]; const wrist = lm[0];
                     let openDist = 0; tips.forEach(i => openDist += Math.hypot(lm[i].x-wrist.x, lm[i].y-wrist.y));
@@ -513,7 +508,6 @@
                     else if (pinchDist < 0.05) { state = 'PHOTO'; } 
                     else { state = 'EXPLODE'; }
                 } else {
-                    // Reset về giữa nếu không thấy tay
                     if(state !== 'TREE') { handX = 0.5; handY = 0.5; }
                 }
             });
