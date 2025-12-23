@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Christmas - White Blizzard</title>
+    <title>Magic Christmas - Frozen Effect</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -54,12 +54,12 @@
 <body>
     <div id="ui-layer">
         <div class="guide">
-            ✌️ <b>2 Ngón:</b> Bão Tuyết &nbsp;|&nbsp; 🖐 <b>Mở tay:</b> Mây Ảnh &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
+            ✌️ <b>2 Ngón:</b> Đóng Băng &nbsp;|&nbsp; 🖐 <b>Mở tay:</b> Mây Ảnh &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
         </div>
         <button id="btnStart" onclick="startSystem()">START MAGIC</button>
     </div>
 
-    <div id="copyright">© by vandiep (Blizzard Edition)</div>
+    <div id="copyright">© by vandiep (Frozen Edition)</div>
 
     <div id="canvas-container"></div>
     <video class="input_video" style="display:none"></video>
@@ -91,7 +91,7 @@
 
         const CONFIG = {
             goldCount: 2000, redCount: 300, giftCount: 150, 
-            snowCount: 500, // Tăng lượng tuyết lên để tạo hiệu ứng "bão"
+            snowCount: 800, // Số lượng hạt bông tuyết phủ lên
             explodeRadius: CLOUD_RADIUS + 10,  
             treeHeight: 70, treeBaseRadius: 35
         };
@@ -115,12 +115,17 @@
                 ctx.fillStyle = '#FFD700'; ctx.fillRect(54, 20, 20, 88); ctx.fillRect(20, 54, 88, 20);
                 ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth=2; ctx.strokeRect(20,20,88,88);
             } else if (type === 'snowflake') {
-                // Bông tuyết mềm hơn (Soft glow) để tạo cảm giác "hơi tuyết"
-                const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 50);
-                grd.addColorStop(0, '#FFFFFF'); 
-                grd.addColorStop(0.4, 'rgba(255, 255, 255, 0.8)'); 
-                grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                ctx.fillStyle = grd; ctx.fillRect(0,0,128,128);
+                // Vẽ bông tuyết rõ nét hơn
+                ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,128,128);
+                ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; 
+                ctx.shadowColor="#AACCFF"; ctx.shadowBlur=5; // Glow nhẹ màu xanh băng
+                ctx.translate(64,64);
+                for(let i=0; i<6; i++) {
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 45); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, 25); ctx.lineTo(-10, 35); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, 25); ctx.lineTo(10, 35); ctx.stroke();
+                    ctx.rotate(Math.PI/3);
+                }
             }
             return new THREE.CanvasTexture(canvas);
         }
@@ -168,7 +173,8 @@
             groupGold = createParticleSystem('gold', CONFIG.goldCount, 2.0);
             groupRed = createParticleSystem('red', CONFIG.redCount, 3.5); 
             groupGift = createParticleSystem('gift', CONFIG.giftCount, 3.0); 
-            groupSnow = createParticleSystem('snow', CONFIG.snowCount, 3.0); 
+            // Hạt tuyết nhỏ hơn một chút để phủ lên
+            groupSnow = createParticleSystem('snow', CONFIG.snowCount, 2.5); 
 
             createPhotos();
             createDecorations();
@@ -201,12 +207,8 @@
                 let hz = (Math.random() - 0.5) * 8 * rFill; const scaleH = 2.2;
                 pHeartTargets.push(hx * scaleH, hy * scaleH + 5, hz); 
 
-                if (type === 'snow') {
-                    // Tuyết phân bố rộng khắp không gian
-                    pPositions.push((Math.random()-0.5)*120, 100 + Math.random()*50, (Math.random()-0.5)*80);
-                } else {
-                    pPositions.push(pTreeTargets[i*3], pTreeTargets[i*3+1], pTreeTargets[i*3+2]);
-                }
+                // Vị trí ban đầu: Tất cả đều bắt đầu từ dạng cây thông
+                pPositions.push(pTreeTargets[i*3], pTreeTargets[i*3+1], pTreeTargets[i*3+2]);
 
                 sizes.push(size);
                 phases.push(Math.random() * Math.PI * 2);
@@ -233,9 +235,12 @@
                 phases: phases, baseColor: baseColor, baseSize: size
             };
 
+            // Blending cho tuyết là Normal để thấy rõ hình dáng bông tuyết
+            const blending = (type === 'gift' || type === 'snow') ? THREE.NormalBlending : THREE.AdditiveBlending;
+
             const mat = new THREE.PointsMaterial({
                 size: size, map: textures[type], transparent: true, opacity: 1.0,
-                vertexColors: true, blending: THREE.AdditiveBlending, 
+                vertexColors: true, blending: blending, 
                 depthWrite: false, sizeAttenuation: true
             });
 
@@ -315,37 +320,15 @@
             const baseColor = group.geometry.userData.baseColor;
             const baseSize = group.geometry.userData.baseSize;
             
-            // --- LOGIC HẠT TUYẾT (RƠI TỰ DO) ---
-            if (type === 'snow') {
-                if (targetState === 'SNOW') {
-                    for(let i=0; i<positions.length; i+=3) {
-                        positions[i+1] -= 0.3 + Math.random()*0.4; // Tăng tốc độ rơi
-                        positions[i] += Math.sin(time + positions[i+1]*0.1) * 0.2; // Lắc lư mạnh hơn
-                        
-                        // Reset khi rơi xuống đáy
-                        if (positions[i+1] < -60) {
-                            positions[i+1] = 80 + Math.random()*40; 
-                            positions[i] = (Math.random()-0.5)*120; 
-                            positions[i+2] = (Math.random()-0.5)*80;
-                        }
-                        sizes[i/3] = baseSize; 
-                        colors[i] = 1; colors[i+1] = 1; colors[i+2] = 1;
-                    }
-                } else {
-                    for(let i=0; i<positions.length/3; i++) sizes[i] = 0; // Ẩn tuyết nếu không phải SNOW
-                }
-                group.geometry.attributes.position.needsUpdate = true;
-                group.geometry.attributes.size.needsUpdate = true;
-                group.geometry.attributes.color.needsUpdate = true;
-                return;
-            }
+            // Xác định mục tiêu di chuyển
+            // Nếu là SNOW, nó sẽ dùng target của trạng thái EXPLODE (đám mây)
+            let effectiveState = targetState;
+            if (targetState === 'SNOW') effectiveState = 'EXPLODE';
 
-            // --- LOGIC CÁC HẠT KHÁC (GOLD/RED/GIFT) ---
-            // QUAN TRỌNG: Nếu là SNOW thì vị trí đích là EXPLODE (Cloud) thay vì Tree
-            // Để tạo hiệu ứng "đám mây hóa tuyết"
-            const targetKey = (targetState === 'TREE') ? 'tree' : (targetState === 'HEART' ? 'heart' : 'explode');
-            const targets = group.geometry.userData[(targetState === 'PHOTO') ? 'explode' : targetKey];
+            const targetKey = (effectiveState === 'TREE') ? 'tree' : (effectiveState === 'HEART' ? 'heart' : 'explode');
+            const targets = group.geometry.userData[(effectiveState === 'PHOTO') ? 'explode' : targetKey];
 
+            // Di chuyển hạt
             for(let i=0; i<positions.length; i++) {
                 positions[i] += (targets[i] - positions[i]) * speed;
             }
@@ -353,36 +336,43 @@
             
             const count = positions.length / 3;
             
-            // Xử lý xoay theo tay (áp dụng cho cả EXPLODE, PHOTO và SNOW)
-            if (targetState === 'EXPLODE' || targetState === 'PHOTO' || targetState === 'SNOW') {
+            // Xử lý xoay (SNOW cũng xoay được)
+            if (effectiveState === 'EXPLODE' || effectiveState === 'PHOTO') {
                 group.scale.set(1,1,1);
                 group.rotation.y += (rY - group.rotation.y) * 0.1;
                 group.rotation.x += (rX - group.rotation.x) * 0.1;
-            } else if (targetState === 'TREE') {
+            } else if (effectiveState === 'TREE') {
                 group.rotation.y += 0.003; group.rotation.x = 0;
-            } else if (targetState === 'HEART') {
+            } else if (effectiveState === 'HEART') {
                 group.rotation.y = 0; group.rotation.x = 0;
                 const bs = 1 + Math.abs(Math.sin(time * 3)) * 0.15;
                 group.scale.set(bs, bs, bs);
             }
 
-            // --- MÀU SẮC ---
+            // --- MÀU SẮC & SIZE (QUAN TRỌNG) ---
             for(let i=0; i<count; i++) {
-                sizes[i] = baseSize;
-                
-                if (targetState === 'SNOW') {
-                    // CHẾ ĐỘ TUYẾT: Ép tất cả thành màu TRẮNG SÁNG
+                sizes[i] = baseSize; 
+
+                // LOGIC CHO HẠT TUYẾT (BÔNG TUYẾT THÊM VÀO)
+                if (type === 'snow') {
+                    // Chỉ hiện hạt tuyết khi ở trạng thái SNOW
+                    if (targetState !== 'SNOW') sizes[i] = 0;
+                    // Màu tuyết luôn trắng
                     colors[i*3] = 1.0; colors[i*3+1] = 1.0; colors[i*3+2] = 1.0;
-                } 
+                }
+                // LOGIC CHO CÁC HẠT CHÍNH (VÀNG/ĐỎ/QUÀ)
+                else if (targetState === 'SNOW') {
+                    // CHẾ ĐỘ ĐÓNG BĂNG: Ép các hạt chính thành màu TRẮNG SÁNG
+                    colors[i*3] = 1.0; colors[i*3+1] = 1.0; colors[i*3+2] = 1.0;
+                }
                 else if (targetState === 'HEART') {
-                    // Chế độ tim: Màu gốc
                     if (i % 3 === 0) sizes[i] = baseSize; else sizes[i] = 0;
                     colors[i*3] = baseColor.r; colors[i*3+1] = baseColor.g; colors[i*3+2] = baseColor.b;
                 }
                 else {
                     // Chế độ bình thường (Tree, Explode)
                     let b = 1.0;
-                    if (targetState !== 'TREE') b = 0.8 + 0.5 * Math.sin(time * 12 + phases[i]); // Nhấp nháy ở Cloud
+                    if (effectiveState !== 'TREE') b = 0.8 + 0.5 * Math.sin(time * 12 + phases[i]); 
                     else {
                         if(type === 'red') b = 0.5 + 0.5 * Math.sin(time * 3 + phases[i]);
                         else if(type === 'gold') b = 0.8 + 0.4 * Math.sin(time * 10 + phases[i]);
@@ -426,8 +416,7 @@
                 titleMesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1);
                 starMesh.rotation.z -= 0.02; starMesh.material.opacity = 0.7 + 0.3*Math.sin(time*5);
                 photoMeshes.forEach(m => { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); m.visible = false; });
-                
-                // Reset màu Title/Star
+                // Reset màu
                 titleMesh.material.color.setHex(0xFFFFFF); starMesh.material.color.setHex(0xFFFFFF);
 
             } else if (state === 'HEART') {
@@ -437,7 +426,6 @@
                 loveMesh.scale.set(1 + Math.abs(Math.sin(time*3))*0.1, 1 + Math.abs(Math.sin(time*3))*0.1, 1);
 
             } else if (state === 'EXPLODE' || state === 'SNOW') {
-                // EXPLODE và SNOW dùng chung logic vị trí ảnh
                 lockedIndex = -1; 
                 titleMesh.visible = false; starMesh.visible = false; loveMesh.visible = false;
                 
@@ -454,7 +442,8 @@
                     let targetScale = 0.15; if (vec.z > (CLOUD_RADIUS - 10)) targetScale = 0.3;
                     mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
                     
-                    // Nếu là SNOW thì có thể phủ trắng ảnh hoặc giữ nguyên (Ở đây giữ nguyên ảnh cho đẹp)
+                    // Nếu thích ảnh cũng bị phủ trắng thì bỏ comment dòng dưới:
+                    // if(state === 'SNOW') mesh.material.color.setHex(0xAAAAFF); else mesh.material.color.setHex(0xFFFFFF);
                 });
                 selectedIndex = bestIdx;
 
@@ -511,9 +500,7 @@
                     const avgDist = openDist / 4;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    // --- GESTURE LOGIC: VICTORY / 2 FINGERS (Snow) ---
-                    // Index & Middle Open (> 0.3) AND Ring & Pinky Closed (< 0.25)
-                    // Đây là gesture "Peace" hoặc "Victory"
+                    // VICTORY (Snow/Frozen)
                     if (dIndex > 0.3 && dMiddle > 0.3 && dRing < 0.25 && dPinky < 0.25) {
                         state = 'SNOW';
                     } 
