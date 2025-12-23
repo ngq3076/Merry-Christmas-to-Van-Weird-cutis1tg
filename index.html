@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Christmas - Snow Finger</title>
+    <title>Magic Christmas - Thumb Snow</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -54,12 +54,12 @@
 <body>
     <div id="ui-layer">
         <div class="guide">
-            ☝️ <b>1 Ngón:</b> Hóa tuyết &nbsp;|&nbsp; 🖐 <b>Mở tay:</b> Xoay 3D &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
+            👍 <b>Ngón Cái:</b> Hóa Tuyết &nbsp;|&nbsp; 🖐 <b>Mở tay:</b> Xoay 3D &nbsp;|&nbsp; 🫶 <b>Tim:</b> Love &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
         </div>
         <button id="btnStart" onclick="startSystem()">START MAGIC</button>
     </div>
 
-    <div id="copyright">© by vandiep (Snow Edition)</div>
+    <div id="copyright">© by vandiep (Thumb Update)</div>
 
     <div id="canvas-container"></div>
     <video class="input_video" style="display:none"></video>
@@ -79,7 +79,7 @@
             './image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg',
             'https://picsum.photos/id/1011/500/500', 'https://picsum.photos/id/1012/500/500',
             'https://picsum.photos/id/1013/500/500', 'https://picsum.photos/id/1014/500/500',
-            'https://picsum.photos/id/1015/500/500', 'https://picsum.photos/id/1016/500/500'
+            'https://picsum.photos/id/1015/500/500'
         ];
 
         const photoTextures = [];
@@ -90,7 +90,7 @@
         const CLOUD_RADIUS = 45; 
 
         const CONFIG = {
-            goldCount: 2000, redCount: 300, giftCount: 150, snowCount: 200, // Thêm số lượng tuyết
+            goldCount: 2000, redCount: 300, giftCount: 150, snowCount: 200, 
             explodeRadius: CLOUD_RADIUS + 10,  
             treeHeight: 70, treeBaseRadius: 35
         };
@@ -114,7 +114,6 @@
                 ctx.fillStyle = '#FFD700'; ctx.fillRect(54, 20, 20, 88); ctx.fillRect(20, 54, 88, 20);
                 ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth=2; ctx.strokeRect(20,20,88,88);
             } else if (type === 'snowflake') {
-                // VẼ BÔNG TUYẾT
                 ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,128,128);
                 ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4; ctx.shadowColor="#FFF"; ctx.shadowBlur=10;
                 ctx.translate(64,64);
@@ -139,7 +138,7 @@
         // 2. STATE VARIABLES
         // ==========================================
         let scene, camera, renderer;
-        let groupGold, groupRed, groupGift, groupSnow; // Thêm groupSnow
+        let groupGold, groupRed, groupGift, groupSnow; 
         let photoMeshes = [];    
         let titleMesh, starMesh, loveMesh;
         
@@ -171,7 +170,7 @@
             groupGold = createParticleSystem('gold', CONFIG.goldCount, 2.0);
             groupRed = createParticleSystem('red', CONFIG.redCount, 3.5); 
             groupGift = createParticleSystem('gift', CONFIG.giftCount, 3.0); 
-            groupSnow = createParticleSystem('snow', CONFIG.snowCount, 4.0); // Tạo tuyết
+            groupSnow = createParticleSystem('snow', CONFIG.snowCount, 4.0); 
 
             createPhotos();
             createDecorations();
@@ -180,13 +179,10 @@
 
         function createParticleSystem(type, count, size) {
             const pPositions = [];
-            const pExplodeTargets = []; 
-            const pTreeTargets = [];
-            const pHeartTargets = [];
+            const pExplodeTargets = []; const pTreeTargets = []; const pHeartTargets = [];
             const sizes = []; const phases = []; 
             
             for(let i=0; i<count; i++) {
-                // TREE POS
                 const h = Math.random() * CONFIG.treeHeight; 
                 const y = h - CONFIG.treeHeight / 2;
                 let radiusRatio = (type === 'gold') ? Math.sqrt(Math.random()) : 0.9 + Math.random()*0.1;
@@ -195,13 +191,11 @@
                 const theta = Math.random() * Math.PI * 2;
                 pTreeTargets.push(r * Math.cos(theta), y, r * Math.sin(theta));
 
-                // EXPLODE POS
                 const u = Math.random(); const v = Math.random();
                 const phi = Math.acos(2 * v - 1); const lam = 2 * Math.PI * u;
                 const rVar = CONFIG.explodeRadius * (0.8 + 0.4 * Math.random()); 
                 pExplodeTargets.push(rVar * Math.sin(phi) * Math.cos(lam), rVar * Math.sin(phi) * Math.sin(lam), rVar * Math.cos(phi));
 
-                // HEART POS
                 const tHeart = Math.random() * Math.PI * 2;
                 let hx = 16 * Math.pow(Math.sin(tHeart), 3);
                 let hy = 13 * Math.cos(tHeart) - 5 * Math.cos(2*tHeart) - 2 * Math.cos(3*tHeart) - Math.cos(4*tHeart);
@@ -209,8 +203,6 @@
                 let hz = (Math.random() - 0.5) * 8 * rFill; const scaleH = 2.2;
                 pHeartTargets.push(hx * scaleH, hy * scaleH + 5, hz); 
 
-                // --- Vị trí ban đầu ---
-                // Nếu là tuyết thì cho bay ở trên cao
                 if (type === 'snow') {
                     pPositions.push((Math.random()-0.5)*100, 100 + Math.random()*50, (Math.random()-0.5)*50);
                 } else {
@@ -229,7 +221,7 @@
             const baseColor = new THREE.Color();
             if(type === 'gold') baseColor.setHex(0xFFD700);
             else if(type === 'red') baseColor.setHex(0xFF0000);
-            else if(type === 'snow') baseColor.setHex(0xFFFFFF); // Tuyết màu trắng
+            else if(type === 'snow') baseColor.setHex(0xFFFFFF); 
             else baseColor.setHex(0xFFFFFF);
 
             for(let i=0; i<count; i++) {
@@ -282,7 +274,6 @@
         }
 
         function createDecorations() {
-            // Title
             const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             ctx.font = 'bold italic 90px "Times New Roman"'; ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
@@ -292,7 +283,7 @@
             titleMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), mat);
             titleMesh.position.set(0, 50, 0);
             scene.add(titleMesh);
-            // Star
+
             const starCanvas = document.createElement('canvas'); starCanvas.width = 128; starCanvas.height = 128;
             const sCtx = starCanvas.getContext('2d');
             sCtx.fillStyle = "#FFFF00"; sCtx.shadowColor="#FFF"; sCtx.shadowBlur=20; sCtx.beginPath();
@@ -304,7 +295,7 @@
             starMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), starMat);
             starMesh.position.set(0, CONFIG.treeHeight/2 + 2, 0);
             scene.add(starMesh);
-            // Love
+
             const loveCanvas = document.createElement('canvas'); loveCanvas.width = 1024; loveCanvas.height = 256;
             const lCtx = loveCanvas.getContext('2d');
             lCtx.font = 'bold 120px "Segoe UI", sans-serif'; lCtx.fillStyle = '#FF69B4'; lCtx.textAlign = 'center';
@@ -328,23 +319,15 @@
             // Xử lý riêng cho TUYẾT (SNOW)
             if (type === 'snow') {
                 if (targetState === 'SNOW') {
-                    // Tuyết rơi xuống
                     for(let i=0; i<positions.length; i+=3) {
-                        positions[i+1] -= 0.2 + Math.random()*0.3; // Rơi xuống Y
-                        positions[i] += Math.sin(time + positions[i+1]*0.1) * 0.1; // Lắc lư X
-                        
-                        // Nếu rơi quá thấp thì reset lên trên
+                        positions[i+1] -= 0.2 + Math.random()*0.3; // Rơi
+                        positions[i] += Math.sin(time + positions[i+1]*0.1) * 0.1;
                         if (positions[i+1] < -50) {
-                            positions[i+1] = 60 + Math.random()*20;
-                            positions[i] = (Math.random()-0.5)*100;
-                            positions[i+2] = (Math.random()-0.5)*50;
+                            positions[i+1] = 60 + Math.random()*20; positions[i] = (Math.random()-0.5)*100; positions[i+2] = (Math.random()-0.5)*50;
                         }
-                        
-                        sizes[i/3] = baseSize;
-                        colors[i] = 1; colors[i+1] = 1; colors[i+2] = 1;
+                        sizes[i/3] = baseSize; colors[i] = 1; colors[i+1] = 1; colors[i+2] = 1;
                     }
                 } else {
-                    // Ẩn tuyết đi (cho size = 0)
                     for(let i=0; i<positions.length/3; i++) sizes[i] = 0;
                 }
                 group.geometry.attributes.position.needsUpdate = true;
@@ -353,7 +336,6 @@
                 return;
             }
 
-            // Xử lý các hạt thường (Gold, Red, Gift)
             const targetKey = (targetState === 'TREE' || targetState === 'SNOW') ? 'tree' : (targetState === 'HEART' ? 'heart' : 'explode');
             const targets = group.geometry.userData[(targetState === 'PHOTO') ? 'explode' : targetKey];
 
@@ -363,20 +345,15 @@
             group.geometry.attributes.position.needsUpdate = true;
             
             const count = positions.length / 3;
-
-            // QUẢN LÝ MÀU SẮC (Bị override nếu là chế độ SNOW)
             const isSnowMode = (targetState === 'SNOW');
             
             if (targetState === 'TREE' || targetState === 'SNOW') {
                 group.rotation.y += 0.003; group.rotation.x = 0;
                 for(let i=0; i<count; i++) {
                     sizes[i] = baseSize;
-                    
                     if (isSnowMode) {
-                        // CHẾ ĐỘ SNOW: Tất cả thành TRẮNG SÁNG
-                        colors[i*3] = 1.0; colors[i*3+1] = 1.0; colors[i*3+2] = 1.0;
+                        colors[i*3] = 1.0; colors[i*3+1] = 1.0; colors[i*3+2] = 1.0; // Hóa trắng
                     } else {
-                        // CHẾ ĐỘ THƯỜNG: Màu gốc
                         let b = 1.0;
                         if(type === 'red') b = 0.5 + 0.5 * Math.sin(time * 3 + phases[i]);
                         else if(type === 'gold') b = 0.8 + 0.4 * Math.sin(time * 10 + phases[i]);
@@ -392,7 +369,6 @@
                     sizes[i] = (i % 3 === 0) ? baseSize : 0;
                 }
             } else {
-                // EXPLODE & PHOTO
                 group.scale.set(1,1,1);
                 group.rotation.y += (rY - group.rotation.y) * 0.1;
                 group.rotation.x += (rX - group.rotation.x) * 0.1;
@@ -420,7 +396,6 @@
             curRotY += (targetRotY - curRotY) * 0.1;
             curRotX += (targetRotX - curRotX) * 0.1;
 
-            // Cập nhật các nhóm hạt
             updateParticleGroup(groupGold, 'gold', state, speed, curRotX, curRotY, time);
             updateParticleGroup(groupRed, 'red', state, speed, curRotX, curRotY, time);
             updateParticleGroup(groupGift, 'gift', state, speed, curRotX, curRotY, time);
@@ -439,13 +414,10 @@
                 starMesh.rotation.z -= 0.02; starMesh.material.opacity = 0.7 + 0.3*Math.sin(time*5);
                 photoMeshes.forEach(m => { m.scale.lerp(new THREE.Vector3(0,0,0), 0.1); m.visible = false; });
                 
-                // Nếu đang Snow thì đổi màu Title/Star sang trắng cho hợp tone
                 if (state === 'SNOW') {
-                    titleMesh.material.color.setHex(0xFFFFFF);
-                    starMesh.material.color.setHex(0xFFFFFF);
+                    titleMesh.material.color.setHex(0xFFFFFF); starMesh.material.color.setHex(0xFFFFFF);
                 } else {
-                    titleMesh.material.color.setHex(0xFFFFFF); // Giữ trắng mặc định hoặc vàng tùy ý
-                    starMesh.material.color.setHex(0xFFFFFF); 
+                    titleMesh.material.color.setHex(0xFFFFFF); starMesh.material.color.setHex(0xFFFFFF); 
                 }
 
             } else if (state === 'HEART') {
@@ -460,7 +432,6 @@
                 
                 const euler = new THREE.Euler(curRotX, curRotY, 0, 'YXZ');
                 let bestIdx = 0; let maxZ = -9999;
-
                 photoMeshes.forEach((mesh, i) => {
                     mesh.visible = true;
                     const vec = new THREE.Vector3().copy(mesh.userData.origin);
@@ -468,7 +439,6 @@
                     mesh.position.lerp(vec, 0.1);
                     dummyLookAt.position.copy(mesh.position); dummyLookAt.lookAt(camera.position);
                     mesh.quaternion.slerp(dummyLookAt.quaternion, 0.1);
-
                     if (vec.z > maxZ) { maxZ = vec.z; bestIdx = i; }
                     let targetScale = 0.15; if (vec.z > (CLOUD_RADIUS - 10)) targetScale = 0.3;
                     mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
@@ -506,7 +476,6 @@
             hands.onResults(results => {
                 ctx.clearRect(0,0,100,75); ctx.drawImage(results.image, 0, 0, 100, 75);
 
-                // --- GESTURE LOGIC ---
                 if (results.multiHandLandmarks.length === 2) {
                     const h1 = results.multiHandLandmarks[0]; const h2 = results.multiHandLandmarks[1];
                     const distIndex = Math.hypot(h1[8].x - h2[8].x, h1[8].y - h2[8].y);
@@ -517,29 +486,40 @@
                 if(results.multiHandLandmarks.length > 0) {
                     const lm = results.multiHandLandmarks[0];
                     handX = lm[9].x; handY = lm[9].y; 
-                    
                     const wrist = lm[0];
-                    // Tính khoảng cách từ đầu ngón tay về cổ tay
+                    
+                    // Khoảng cách từ cổ tay tới các đầu ngón
+                    const dThumb = Math.hypot(lm[4].x-wrist.x, lm[4].y-wrist.y);
                     const dIndex = Math.hypot(lm[8].x-wrist.x, lm[8].y-wrist.y);
                     const dMiddle = Math.hypot(lm[12].x-wrist.x, lm[12].y-wrist.y);
                     const dRing = Math.hypot(lm[16].x-wrist.x, lm[16].y-wrist.y);
                     const dPinky = Math.hypot(lm[20].x-wrist.x, lm[20].y-wrist.y);
 
-                    const tips = [8,12,16,20];
-                    let openDist = 0; tips.forEach(i => openDist += Math.hypot(lm[i].x-wrist.x, lm[i].y-wrist.y));
-                    const avgDist = openDist / 4;
+                    // Tính trung bình 4 ngón (trừ ngón cái)
+                    const avgDist = (dIndex + dMiddle + dRing + dPinky) / 4;
                     const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    // --- PHÁT HIỆN NGÓN TRỎ (ONE FINGER) ---
-                    // Điều kiện: Ngón trỏ xa cổ tay, các ngón khác gần cổ tay
-                    if (dIndex > 0.3 && dMiddle < 0.25 && dRing < 0.25 && dPinky < 0.25) {
-                        state = 'SNOW'; // Chế độ mới
+                    // ============================================
+                    // LOGIC NHẬN DIỆN MỚI
+                    // ============================================
+
+                    // 1. Check THUMB UP (Ngón cái) trước
+                    // Điều kiện: Ngón cái duỗi (xa cổ tay), Ngón trỏ cuộn (gần cổ tay), Ngón út cuộn
+                    // Ngón cái phải cách cổ tay > 0.3, trong khi các ngón kia < 0.3
+                    if (dThumb > 0.3 && dIndex < 0.25 && dPinky < 0.25) {
+                        state = 'SNOW';
                     } 
+                    // 2. Check FIST (Nắm đấm / Cây thông)
+                    // Điều kiện: Cả 4 ngón đều cuộn vào
                     else if (avgDist < 0.25) { 
                         state = 'TREE'; 
-                    } else if (pinchDist < 0.05) { 
+                    } 
+                    // 3. Check PINCH (Chụm ngón tay / Xem ảnh)
+                    else if (pinchDist < 0.05) { 
                         state = 'PHOTO'; 
-                    } else { 
+                    } 
+                    // 4. Default: OPEN HAND (Xoay 3D)
+                    else { 
                         state = 'EXPLODE'; 
                     }
                 } else {
