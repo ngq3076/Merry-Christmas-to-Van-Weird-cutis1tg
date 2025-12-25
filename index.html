@@ -90,6 +90,7 @@
                 red: isMobile ? 200 : 300, 
                 gift: isMobile ? 100 : 150 
             },
+            // Tinh chỉnh bán kính để cây trông cân đối hơn
             baseRadius: isMobile ? 65 : 45, 
             tree: { 
                 height: isMobile ? 120 : 70, 
@@ -193,7 +194,8 @@
         }
 
         function updateCameraPosition() {
-            const paddingMultiplier = isMobile ? 1.5 : 1.4; 
+            // Tăng khoảng cách camera một chút để thấy trọn vẹn cả ngôi sao và chữ
+            const paddingMultiplier = isMobile ? 1.6 : 1.5; 
             const targetSize = CONFIG.baseRadius * paddingMultiplier; 
             
             const fovRad = (camera.fov * Math.PI) / 180;
@@ -302,7 +304,7 @@
         }
 
         // ===========================================
-        // FIX: Đã chỉnh vị trí Star và Title cao hơn
+        // FIX: Đã điều chỉnh lại tọa độ Y cho Star và Title
         // ===========================================
         function createDecorations() {
             const fontSize = isMobile ? '50px' : '90px';
@@ -316,8 +318,9 @@
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending });
             titleMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), mat);
             
-            // FIX: Đẩy chữ lên cao hơn nữa (+35) để thoáng
-            titleMesh.position.set(0, CONFIG.tree.height / 2 + 35, 0);
+            // FIX: Hạ độ cao chữ xuống (chỉ cách đỉnh +20 thay vì +35)
+            // Khoảng cách này vừa đủ để không dính vào sao nhưng không bị mất nóc
+            titleMesh.position.set(0, CONFIG.tree.height / 2 + 20, 0);
             scene.add(titleMesh);
 
             const starCanvas = document.createElement('canvas'); starCanvas.width = 128; starCanvas.height = 128;
@@ -330,8 +333,8 @@
             const starMat = new THREE.MeshBasicMaterial({ map: starTex, transparent: true, blending: THREE.AdditiveBlending });
             starMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), starMat);
             
-            // FIX: Nâng sao lên cao (+5) thay vì hạ xuống (-1)
-            // Tâm ngôi sao sẽ nằm phía trên đỉnh cây
+            // FIX: Đẩy ngôi sao lên cao hơn nữa (+5)
+            // Lúc này tâm ngôi sao nằm hẳn trên ngọn cây, không bị chìm
             starMesh.position.set(0, CONFIG.tree.height / 2 + 5, 0);
             scene.add(starMesh);
 
