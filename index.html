@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Magic Christmas to Van </title>
+    <title>Magic Christmas - Mobile Layout Fixed</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -70,8 +70,8 @@
 <body>
     <div id="ui-layer">
         <div class="guide">
-            ✌️ <b>Hi:</b> Theme Tuyết &nbsp;|&nbsp; 🤟 <b>Ba :</b> Theme chill <br>
-            🖐 <b>Mở:</b> Xoay 360 &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
+            ✌️ <b>2 Ngón:</b> Bật Tuyết &nbsp;|&nbsp; 🤟 <b>3 Ngón:</b> Tắt Tuyết <br>
+            🖐 <b>Mở:</b> Xoay &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
         </div>
         <button id="btnStart" onclick="startSystem()">-> START <-</button>
     </div>
@@ -90,17 +90,17 @@
                 red: isMobile ? 200 : 300, 
                 gift: isMobile ? 100 : 150 
             },
-            // --- TỐI ƯU KÍCH THƯỚC CHO MOBILE ---
-            // Tăng bán kính đám mây để rộng hơn
-            baseRadius: isMobile ? 100 : 80, 
+            baseRadius: isMobile ? 70 : 45, // Giảm nhẹ baseRadius mobile để gọn hơn chút (80 -> 70)
             tree: { 
-                // Tăng chiều cao cây đáng kể để lấp đầy chiều dọc điện thoại
-                height: isMobile ? 200 : 170, 
-                // Tăng bán kính đáy cây
-                radius: isMobile ? 100 : 80
+                height: isMobile ? 130 : 70, // Giảm nhẹ height (150 -> 130) để dễ lọt khung hình
+                radius: isMobile ? 60 : 35 
             },
-            photos: [ './1.jpg', './2.jpg', './3.jpg', './4.jpg', './5.jpg', './6.jpg', './7.jpg', './10.jpg', 
-                     './11.jpg', './12.jpg', './13.jpg', './14.jpg', './15.jpg', './16.jpg', './19.jpg', './20.jpg' ]
+            photos: [
+                './image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg',
+                'https://picsum.photos/id/1011/500/500', 'https://picsum.photos/id/1012/500/500',
+                'https://picsum.photos/id/1013/500/500', 'https://picsum.photos/id/1014/500/500',
+                'https://picsum.photos/id/1015/500/500'
+            ]
         };
 
         let scene, camera, renderer;
@@ -195,9 +195,9 @@
         }
 
         function updateCameraPosition() {
-            // --- TỐI ƯU CAMERA CHO MOBILE ---
-            // Giảm padding multiplier xuống 1.5 để ép hình to hơn trên mobile
-            const paddingMultiplier = isMobile ? 1.5 : 1.4; 
+            // FIX: Tăng khoảng cách camera (Padding) để lấy hết chiều cao cây + chữ
+            // Trước là 1.5, giờ tăng lên 2.0 để lùi xa hơn trên màn hình dọc
+            const paddingMultiplier = isMobile ? 2.0 : 1.4; 
             const targetSize = CONFIG.baseRadius * paddingMultiplier; 
             
             const fovRad = (camera.fov * Math.PI) / 180;
@@ -306,9 +306,9 @@
         }
 
         function createDecorations() {
-            // Chữ nhỏ hơn trên mobile
-            const fontSize = isMobile ? '50px' : '90px';
-            const loveSize = isMobile ? '70px' : '120px';
+            // FIX: Tăng size chữ trên mobile cho dễ đọc (50px -> 80px)
+            const fontSize = isMobile ? '80px' : '90px';
+            const loveSize = isMobile ? '80px' : '120px';
 
             const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d');
@@ -317,7 +317,12 @@
             const tex = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending });
             titleMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), mat);
-            titleMesh.position.set(0, 50, 0);
+            
+            // FIX: Đặt vị trí chữ động theo chiều cao cây
+            // Trên mobile đặt cao hơn đỉnh cây 25 đơn vị
+            const textY = CONFIG.tree.height / 2 + (isMobile ? 30 : 15);
+            titleMesh.position.set(0, textY, 0);
+            
             scene.add(titleMesh);
 
             const starCanvas = document.createElement('canvas'); starCanvas.width = 128; starCanvas.height = 128;
@@ -329,6 +334,7 @@
             const starTex = new THREE.CanvasTexture(starCanvas);
             const starMat = new THREE.MeshBasicMaterial({ map: starTex, transparent: true, blending: THREE.AdditiveBlending });
             starMesh = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), starMat);
+            // Ngôi sao tự động nằm ngay đỉnh cây
             starMesh.position.set(0, CONFIG.tree.height/2 + 2, 0);
             scene.add(starMesh);
 
@@ -499,9 +505,8 @@
 
                     if (vec.z > maxZ) { maxZ = vec.z; bestIdx = i; }
 
-                    // TĂNG SIZE CLOUD TRÊN MOBILE
                     let targetScale = 0.15; if (vec.z > (CONFIG.baseRadius - 10)) targetScale = 0.3; 
-                    if (isMobile) targetScale *= 1.2; // Tăng 20% kích thước ảnh
+                    if (isMobile) targetScale *= 1.2; 
 
                     if (isSnowTheme) mesh.material.color.lerp(new THREE.Color(0xDDEEFF), 0.02);
                     else mesh.material.color.lerp(new THREE.Color(0xFFFFFF), 0.02);
@@ -519,8 +524,7 @@
                         const zoomZ = camera.position.z - 40; 
                         mesh.position.lerp(new THREE.Vector3(0, 0, zoomZ), 0.08); 
                         
-                        // GIỚI HẠN ZOOM TRÊN MOBILE ĐỂ KHÔNG TRÀN MÀN HÌNH
-                        const zoomScale = isMobile ? 3.0 : 5.0; // Mobile chỉ zoom 3.0
+                        const zoomScale = isMobile ? 3.0 : 5.0; 
                         mesh.scale.lerp(new THREE.Vector3(zoomScale, zoomScale, zoomScale), 0.08); 
                         
                         mesh.rotation.x += (0 - mesh.rotation.x) * 0.1;
@@ -555,7 +559,6 @@
             });
 
             hands.onResults(results => {
-                // CROP VIDEO CAMERA ĐỂ KHÔNG BỊ MÉO HÌNH
                 const videoRatio = results.image.width / results.image.height;
                 const canvasRatio = canvas.width / canvas.height;
                 let sw, sh, sx, sy;
