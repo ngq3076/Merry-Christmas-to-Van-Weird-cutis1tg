@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Magic Christmas - Mobile Perfection</title>
+    <title>Magic Christmas - Full Screen Mobile</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -36,7 +36,6 @@
         @media (max-width: 600px) {
             .guide { font-size: 11px; margin-bottom: 15px; }
             button { padding: 10px 25px; font-size: 14px; }
-            /* Camera nhỏ hơn chút để đỡ che màn hình */
             #camera-preview { width: 80px; height: 60px; top: 10px; right: 10px; }
         }
 
@@ -57,7 +56,7 @@
             width: 120px; height: 90px;
             border: 2px solid rgba(255, 215, 0, 0.5); 
             transform: scaleX(-1); opacity: 0.8; border-radius: 8px;
-            object-fit: cover; /* Quan trọng: Cắt ảnh để vừa khung */
+            object-fit: cover;
             background-color: black;
         }
         
@@ -74,10 +73,8 @@
             ✌️ <b>2 Ngón:</b> Bật Tuyết &nbsp;|&nbsp; 🤟 <b>3 Ngón:</b> Tắt Tuyết <br>
             🖐 <b>Mở:</b> Xoay &nbsp;|&nbsp; ✊ <b>Nắm:</b> Cây thông &nbsp;|&nbsp; 👌 <b>Chụm:</b> Xem ảnh
         </div>
-        <button id="btnStart" onclick="startSystem()">START MAGIC</button>
+        <button id="btnStart" onclick="startSystem()">-> START <-</button>
     </div>
-
-    <div id="copyright">© by vandiep (Mobile Perfect)</div>
 
     <div id="canvas-container"></div>
     <video class="input_video" style="display:none" playsinline></video>
@@ -93,11 +90,14 @@
                 red: isMobile ? 200 : 300, 
                 gift: isMobile ? 100 : 150 
             },
-            // MOBILE ADJUSTMENT: Tăng bán kính và chiều cao cây trên mobile để lấp đầy màn hình dọc
-            baseRadius: isMobile ? 55 : 45, 
+            // --- TỐI ƯU KÍCH THƯỚC CHO MOBILE ---
+            // Tăng bán kính đám mây để rộng hơn
+            baseRadius: isMobile ? 65 : 45, 
             tree: { 
-                height: isMobile ? 90 : 70, 
-                radius: isMobile ? 45 : 35 
+                // Tăng chiều cao cây đáng kể để lấp đầy chiều dọc điện thoại
+                height: isMobile ? 120 : 70, 
+                // Tăng bán kính đáy cây
+                radius: isMobile ? 55 : 35 
             },
             photos: [
                 './image1.jpeg', './image2.jpeg', './image3.jpeg', './image4.jpeg', './image5.jpeg',
@@ -140,7 +140,7 @@
             const cx = 64, cy = 64;
 
             if (type === 'white_glow') {
-                const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 45); 
+                const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 50); 
                 grd.addColorStop(0, '#FFFFFF'); 
                 grd.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)'); 
                 grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -174,9 +174,7 @@
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.002);
 
-            // Tăng FOV trên mobile một chút để nhìn rộng hơn
-            const fov = isMobile ? 75 : 60;
-            camera = new THREE.PerspectiveCamera(fov, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ 
                 antialias: !isMobile, 
@@ -189,7 +187,6 @@
 
             updateCameraPosition();
 
-            // Mobile hạt to hơn chút
             const sizeMod = isMobile ? 1.8 : 1.0;
 
             groupGold = createParticleSystem('gold', CONFIG.particles.gold, 2.0 * sizeMod);
@@ -202,9 +199,9 @@
         }
 
         function updateCameraPosition() {
-            // MOBILE ADJUSTMENT: Zoom out camera trên mobile để vừa khung hình dọc
-            // Tăng multiplier nếu vẫn thấy to
-            const paddingMultiplier = isMobile ? 2.2 : 1.4; 
+            // --- TỐI ƯU CAMERA CHO MOBILE ---
+            // Giảm padding multiplier xuống 1.5 để ép hình to hơn trên mobile
+            const paddingMultiplier = isMobile ? 1.5 : 1.4; 
             const targetSize = CONFIG.baseRadius * paddingMultiplier; 
             
             const fovRad = (camera.fov * Math.PI) / 180;
@@ -506,9 +503,9 @@
 
                     if (vec.z > maxZ) { maxZ = vec.z; bestIdx = i; }
 
-                    // MOBILE ADJUSTMENT: Cloud scale nhỏ hơn một chút trên mobile
+                    // TĂNG SIZE CLOUD TRÊN MOBILE
                     let targetScale = 0.15; if (vec.z > (CONFIG.baseRadius - 10)) targetScale = 0.3; 
-                    if (isMobile) targetScale *= 0.8;
+                    if (isMobile) targetScale *= 1.2; // Tăng 20% kích thước ảnh
 
                     if (isSnowTheme) mesh.material.color.lerp(new THREE.Color(0xDDEEFF), 0.02);
                     else mesh.material.color.lerp(new THREE.Color(0xFFFFFF), 0.02);
@@ -526,8 +523,8 @@
                         const zoomZ = camera.position.z - 40; 
                         mesh.position.lerp(new THREE.Vector3(0, 0, zoomZ), 0.08); 
                         
-                        // MOBILE ADJUSTMENT: Zoom Scale vừa phải cho mobile
-                        const zoomScale = isMobile ? 2.5 : 5.0;
+                        // GIỚI HẠN ZOOM TRÊN MOBILE ĐỂ KHÔNG TRÀN MÀN HÌNH
+                        const zoomScale = isMobile ? 3.0 : 5.0; // Mobile chỉ zoom 3.0
                         mesh.scale.lerp(new THREE.Vector3(zoomScale, zoomScale, zoomScale), 0.08); 
                         
                         mesh.rotation.x += (0 - mesh.rotation.x) * 0.1;
@@ -562,29 +559,20 @@
             });
 
             hands.onResults(results => {
-                // FIXED CAMERA ASPECT RATIO
-                // Tính toán tỷ lệ để crop hình camera vừa với khung Canvas hiển thị
+                // CROP VIDEO CAMERA ĐỂ KHÔNG BỊ MÉO HÌNH
                 const videoRatio = results.image.width / results.image.height;
                 const canvasRatio = canvas.width / canvas.height;
-                
                 let sw, sh, sx, sy;
                 if (videoRatio > canvasRatio) {
-                    sh = results.image.height;
-                    sw = sh * canvasRatio;
-                    sx = (results.image.width - sw) / 2;
-                    sy = 0;
+                    sh = results.image.height; sw = sh * canvasRatio; sx = (results.image.width - sw) / 2; sy = 0;
                 } else {
-                    sw = results.image.width;
-                    sh = sw / canvasRatio;
-                    sx = 0;
-                    sy = (results.image.height - sh) / 2;
+                    sw = results.image.width; sh = sw / canvasRatio; sx = 0; sy = (results.image.height - sh) / 2;
                 }
 
-                // Vẽ đúng phần trung tâm của camera, không bị méo hình
-                canvas.width = 320; canvas.height = 240; // Giữ nguyên độ phân giải hiển thị
+                canvas.width = 320; canvas.height = 240;
                 ctx.clearRect(0,0,320,240); 
                 ctx.save();
-                ctx.scale(-1, 1); // Lật gương
+                ctx.scale(-1, 1);
                 ctx.translate(-320, 0);
                 ctx.drawImage(results.image, sx, sy, sw, sh, 0, 0, 320, 240);
                 ctx.restore();
@@ -629,8 +617,7 @@
 
             const cameraUtils = new Camera(video, {
                 onFrame: async () => { await hands.send({image: video}); }, 
-                width: 640, // Lấy độ phân giải cao hơn để crop không bị vỡ
-                height: 480,
+                width: 640, height: 480,
                 facingMode: 'user'
             });
             cameraUtils.start();
